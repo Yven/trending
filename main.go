@@ -67,7 +67,7 @@ func main() {
 		log.Fatal("Parse error:", err)
 	}
 
-	f, err := os.OpenFile("output.html", os.O_CREATE|os.O_WRONLY, 0755)
+	f, err := os.OpenFile("today.html", os.O_CREATE|os.O_WRONLY, 0755)
 	if err != nil {
 		log.Fatal(err)
 	}

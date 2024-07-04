@@ -41,6 +41,16 @@ type Template struct {
 }
 
 func main() {
+    args := os.Args
+    var saveFile string
+    if len(args) > 1 {
+        if args[1] == "-o" {
+            saveFile = args[2]
+        }
+    } else {
+        saveFile = "today.html"
+    }
+
     sinceList := []Since{
         {"今日", "today"},
         {"本周", "weekly"},
@@ -57,6 +67,9 @@ func main() {
             url := "https://github.com/trending/%s?since=%s"
             list := scrape(fmt.Sprintf(url, lang.Language, since.Tag))
             fmt.Println("GET", since.Name, lang.Language)
+            if len(list) == 0 {
+                log.Fatalln("爬取到的页面数据结构为空")
+            }
 
             projectList = append(projectList, ProjectList { since, lang, list })
         }
@@ -67,7 +80,7 @@ func main() {
 		log.Fatal("Parse error:", err)
 	}
 
-	f, err := os.OpenFile("today.html", os.O_CREATE|os.O_WRONLY, 0755)
+	f, err := os.OpenFile(saveFile, os.O_CREATE|os.O_WRONLY, 0755)
 	if err != nil {
 		log.Fatal(err)
 	}

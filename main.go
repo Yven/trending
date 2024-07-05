@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 
@@ -16,13 +19,34 @@ type ProjectList struct {
 	List     []GithubProject
 }
 
+type TechStackInfoList struct {
+	Name     string `json:"name"`
+	Version  string `json:"version"`
+	Icon     string `json:"icon"`
+	Homepage string `json:"homepage"`
+}
+
+type TechStackList map[string][]TechStackInfoList
+
+type StdTechStackInfo struct {
+	OriginUrl string
+	IconUrl   string
+	Name      string
+}
+
+type StdTechStackList struct {
+	Key  string
+	Info []StdTechStackInfo
+}
+
 type GithubProject struct {
-	Link         string
-	Name         string
-	StarNums     string
-	Desc         string
-	StarTrending string
-	ForkNums     string
+	Link          string
+	Name          string
+	StarNums      string
+	Desc          string
+	StarTrending  string
+	ForkNums      string
+	TechStackList []StdTechStackList
 }
 
 type Since struct {
@@ -53,12 +77,12 @@ func main() {
 
 	sinceList := []Since{
 		{"今日", "today"},
-		{"本周", "weekly"},
+		// {"本周", "weekly"},
 	}
 
 	languageList := []Language{
 		{"Go"},
-		{"PHP"},
+		// {"PHP"},
 	}
 
 	projectList := make([]ProjectList, 0, len(sinceList)*len(languageList))
@@ -106,6 +130,31 @@ func scrape(url string) []GithubProject {
 		project.Name = strings.TrimSpace(parts[0]) + "/" + strings.TrimSpace(strings.Trim(parts[1], "\n"))
 		// link
 		project.Link = "https://github.com" + e.ChildAttr("h2.h3 > a", "href")
+
+		resp, err := http.Get("https://techstack.zeabur.app/repo?url=" + project.Link)
+		if err == nil {
+			defer resp.Body.Close()
+
+			body, _ := ioutil.ReadAll(resp.Body)
+			techList := make(TechStackList)
+			json.Unmarshal(body, &techList)
+			stdList := make([]StdTechStackList, 0, len(techList))
+			for k, infoList := range techList {
+				tmp := StdTechStackList{
+					Key: k,
+				}
+				for _, v := range infoList {
+					tmp.Info = append(tmp.Info, StdTechStackInfo{
+						IconUrl:   v.Icon,
+						Name:      v.Name,
+						OriginUrl: v.Homepage,
+					})
+				}
+				stdList = append(stdList, tmp)
+			}
+			project.TechStackList = stdList
+		}
+
 		// description
 		project.Desc = e.ChildText("p.pr-4")
 

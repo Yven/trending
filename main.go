@@ -66,13 +66,22 @@ type Template struct {
 
 func main() {
 	args := os.Args
-	var saveFile string
+	var saveFile, tempFile string
 	if len(args) > 1 {
-		if args[1] == "-o" {
-			saveFile = args[2]
+		for i := 1; i < len(args)-1; i += 2 {
+			if args[i] == "-o" {
+				saveFile = args[i+1]
+			} else if args[i] == "-i" {
+				tempFile = args[i+1]
+			}
 		}
 	} else {
-		saveFile = "today.html"
+		if len(saveFile) == 0 {
+			saveFile = "today.html"
+		}
+		if len(tempFile) == 0 {
+			tempFile = "template.html"
+		}
 	}
 
 	sinceList := []Since{
@@ -99,7 +108,7 @@ func main() {
 		}
 	}
 
-	t, err := template.ParseFiles("template.html")
+	t, err := template.ParseFiles(tempFile)
 	if err != nil {
 		log.Fatal("Parse error:", err)
 	}

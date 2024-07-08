@@ -4,7 +4,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # 定义执行的命令
-CMD="$SCRIPT_DIR/main -o today.php"
+CMD="$SCRIPT_DIR/main -o $SCRIPT_DIR/today.php -i $SCRIPT_DIR/template.html"
 
 # 定义日志文件
 LOG_FILE="$SCRIPT_DIR/log/cron.log"

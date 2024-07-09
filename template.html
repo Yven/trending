@@ -120,12 +120,25 @@ a:active {
     padding: 0.5%;
     height: 70px;
     width: 52%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+}
+
+.titleTextBox {
     font-size: xx-large;
     font-weight: bold;
     font-family: monospace;
+    height: 80%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.titleUpdateBox {
+    display: flex;
+    justify-content: flex-end;
+    align-content: flex-end;
+    width: 100%;
+    height: 20%;
 }
 
 .projectBox {
@@ -200,7 +213,12 @@ a:active {
 </style>
 <body style="margin: 1%;">
 <div style="display: flex;flex-direction: column;width: 100%;height: 100%;">
-    <div class="titleBox">GitHub Trending</div>
+    <div class="titleBox">
+        <div class="titleTextBox">GitHub Trending</div>
+        <div class="titleUpdateBox">
+            <span style="font-size: small;font-weight: 100;">{{ .UpdateTime }} updated</span>
+        </div>
+    </div>
     <div class="projectBox">
         <div class="projectLeftBox">
             {{ range $s1, $since := .SinceList }}

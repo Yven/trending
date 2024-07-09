@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gocolly/colly"
 )
@@ -59,6 +60,7 @@ type Language struct {
 }
 
 type Template struct {
+	UpdateTime   string
 	SinceList    []Since
 	LanguageList []Language
 	ProjectList  []ProjectList
@@ -86,12 +88,12 @@ func main() {
 
 	sinceList := []Since{
 		{"今日", "today"},
-		// {"本周", "weekly"},
+		{"本周", "weekly"},
 	}
 
 	languageList := []Language{
 		{"Go"},
-		// {"PHP"},
+		{"PHP"},
 	}
 
 	projectList := make([]ProjectList, 0, len(sinceList)*len(languageList))
@@ -122,7 +124,10 @@ func main() {
 		log.Fatal("清空文件内容失败:", err)
 	}
 
-	err = t.Execute(f, Template{sinceList, languageList, projectList})
+	currentTime := time.Now()
+	timeString := currentTime.Format("2006-01-02 15:04")
+
+	err = t.Execute(f, Template{timeString, sinceList, languageList, projectList})
 	if err != nil {
 		log.Fatal("Execute error:", err)
 	}

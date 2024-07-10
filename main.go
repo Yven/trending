@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -136,6 +137,14 @@ func main() {
 func scrape(url string) []GithubProject {
 	list := make([]GithubProject, 0, 18)
 	c := colly.NewCollector(colly.MaxDepth(1))
+	c.WithTransport(&http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   120 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		TLSHandshakeTimeout: 0 * time.Second,
+	})
+
 	c.OnHTML(".Box .Box-row", func(e *colly.HTMLElement) {
 		project := GithubProject{}
 		// author & repository name

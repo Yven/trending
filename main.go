@@ -6,10 +6,10 @@ import (
 	"html/template"
 	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gocolly/colly"
@@ -98,18 +98,34 @@ func main() {
 	}
 
 	projectList := make([]ProjectList, 0, len(sinceList)*len(languageList))
+
+	var wg sync.WaitGroup
+	resList := make(chan ProjectList)
+
+	go func() {
+		for result := range resList {
+			projectList = append(projectList, result)
+		}
+	}()
+
 	for _, since := range sinceList {
 		for _, lang := range languageList {
-			url := "https://github.com/trending/%s?since=%s"
-			list := scrape(fmt.Sprintf(url, lang.Language, since.Tag))
-			fmt.Println("GET", since.Name, lang.Language)
-			if len(list) == 0 {
-				log.Fatalln("爬取到的页面数据结构为空")
-			}
+			wg.Add(1)
+			url := fmt.Sprintf("https://github.com/trending/%s?since=%s", lang.Language, since.Tag)
+			go func() {
+				list := scrape(url)
+				// if len(list) == 0 {
+				// 	log.Fatalln("爬取到的页面数据结构为空")
+				// }
 
-			projectList = append(projectList, ProjectList{since, lang, list})
+				resList <- ProjectList{since, lang, list}
+				wg.Done()
+			}()
 		}
 	}
+
+	wg.Wait()
+	close(resList)
 
 	t, err := template.ParseFiles(tempFile)
 	if err != nil {
@@ -137,14 +153,14 @@ func main() {
 func scrape(url string) []GithubProject {
 	list := make([]GithubProject, 0, 18)
 	c := colly.NewCollector(colly.MaxDepth(1))
-	c.WithTransport(&http.Transport{
-		DialContext: (&net.Dialer{
-			Timeout:   120 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-		TLSHandshakeTimeout: 0 * time.Second,
+	c.SetRequestTimeout(180 * time.Second)
+	c.Limit(&colly.LimitRule{
+		RandomDelay: 500 * time.Millisecond,
 	})
 
+	c.OnResponse(func(r *colly.Response) {
+		fmt.Println(r.Request.URL.String(), ":", r.StatusCode)
+	})
 	c.OnHTML(".Box .Box-row", func(e *colly.HTMLElement) {
 		project := GithubProject{}
 		// author & repository name
@@ -197,7 +213,6 @@ func scrape(url string) []GithubProject {
 
 		list = append(list, project)
 	})
-
 	c.OnError(func(_ *colly.Response, err error) {
 		log.Println("Scrape Error:", err)
 	})

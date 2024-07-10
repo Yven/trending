@@ -26,14 +26,20 @@ MAX_RETRIES=3
 # 当前重试次数
 retry_count=0
 
+# 获取当前时间
+current_time=$(date)
+
+# 编译
+go build $SCRIPT_DIR/main.go
+
 # 循环执行命令直到返回值为 0 或达到最大重试次数
 until $CMD >> $LOG_FILE 2>&1; do
     retry_count=$((retry_count + 1))
     if [ $retry_count -ge $MAX_RETRIES ]; then
-        echo "Command failed after $retry_count attempts. Giving up." >> $LOG_FILE
+        echo "[$current_time]Command failed after $retry_count attempts. Giving up." >> $LOG_FILE
         exit 1
     fi
-    echo "Command failed. Retrying ($retry_count/$MAX_RETRIES)..." >> $LOG_FILE
+    echo "[$current_time]Command failed. Retrying ($retry_count/$MAX_RETRIES)..." >> $LOG_FILE
     sleep 5 # 等待5秒后重试
 done
 

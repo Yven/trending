@@ -189,6 +189,10 @@ func scrape(url string) []GithubProject {
 		list = append(list, project)
 	})
 
+	c.OnError(func(_ *colly.Response, err error) {
+		log.Println("Scrape Error:", err)
+	})
+
 	c.Visit(url)
 	return list
 }
